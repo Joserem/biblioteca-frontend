@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 70" width="240" height="70">
+  <defs>
+    <linearGradient id="undbGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF2A4B"/>
+      <stop offset="100%" stop-color="#E9005B"/>
+    </linearGradient>
+    <linearGradient id="undbGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9005B"/>
+      <stop offset="100%" stop-color="#D9006C"/>
+    </linearGradient>
+    <linearGradient id="undbGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9006C"/>
+      <stop offset="100%" stop-color="#B80075"/>
+    </linearGradient>
+    <linearGradient id="undbGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B80075"/>
+      <stop offset="100%" stop-color="#8F007E"/>
+    </linearGradient>
+  </defs>
+
+  <g>
+    <rect x="0" y="0" width="52" height="52" rx="4" fill="url(#undbGrad1)" />
+    <text x="26" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="37" fill="#FFFFFF" text-anchor="middle">U</text>
+
+    <rect x="56" y="0" width="52" height="52" rx="4" fill="url(#undbGrad2)" />
+    <text x="82" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="37" fill="#FFFFFF" text-anchor="middle">N</text>
+
+    <rect x="112" y="0" width="52" height="52" rx="4" fill="url(#undbGrad3)" />
+    <text x="138" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="37" fill="#FFFFFF" text-anchor="middle">D</text>
+
+    <rect x="168" y="0" width="52" height="52" rx="4" fill="url(#undbGrad4)" />
+    <text x="194" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="37" fill="#FFFFFF" text-anchor="middle">B</text>
+  </g>
+
+  <text x="110" y="66" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="700" font-size="10.5" fill="#E2E8F0" letter-spacing="3" text-anchor="middle">CENTRO UNIVERSITÁRIO</text>
+</svg>

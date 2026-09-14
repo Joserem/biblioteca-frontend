@@ -1,0 +1,6 @@
+{
+  "name": "Sistema de Gestão Bibliotecária",
+  "description": "Sistema administrativo completo e moderno para gestão de acervo, livros, membros, empréstimos, reservas e relatórios estatísticos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
