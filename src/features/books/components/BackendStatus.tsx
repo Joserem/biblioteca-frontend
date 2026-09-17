@@ -11,8 +11,8 @@ interface BackendStatusProps {
 
 /**
  * Converte o nome do líder retornado pela API Orquestradora Java para o rótulo de exibição.
- * Exemplo: 'api-python' -> 'Ativo: Python'
- * O frontend NÃO decide ou escolhe o líder; apenas formata o valor recebido para a interface.
+ * Os únicos backends de negócio da arquitetura são Python e JavaScript.
+ * Java é exclusivamente a Orquestradora, portanto nunca é apresentado como backend de CRUD.
  */
 function formatLeaderLabel(leader?: string | null): string {
   if (!leader) return 'Backend indisponível';
@@ -20,13 +20,10 @@ function formatLeaderLabel(leader?: string | null): string {
   if (lower.includes('python')) {
     return 'Ativo: Python';
   }
-  if (lower.includes('java') && !lower.includes('script')) {
-    return 'Ativo: Java';
-  }
-  if (lower.includes('javascript') || lower.includes('js') || lower.includes('node')) {
+  if (lower.includes('javascript') || lower.includes('node') || lower.includes('js')) {
     return 'Ativo: JavaScript';
   }
-  return `Ativo: ${leader}`;
+  return 'Backend ativo';
 }
 
 export const BackendStatus: React.FC<BackendStatusProps> = ({
@@ -46,7 +43,7 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
     badgeClasses = 'bg-slate-100 text-slate-600 border-slate-200';
     labelText = 'Verificando backend...';
   } else if (isError) {
-    // API Orquestradora Java está desligada (falha de rede / timeout)
+    // API Orquestradora Java está desligada (localhost:8080 inacessível)
     dotColor = 'bg-rose-500';
     badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs';
     labelText = 'Orquestradora indisponível';
@@ -64,15 +61,12 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
     if (lower.includes('python')) {
       dotColor = 'bg-emerald-500';
       badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
-    } else if (lower.includes('java') && !lower.includes('script')) {
-      dotColor = 'bg-blue-500';
-      badgeClasses = 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs';
-    } else if (lower.includes('javascript') || lower.includes('js') || lower.includes('node')) {
+    } else if (lower.includes('javascript') || lower.includes('node') || lower.includes('js')) {
       dotColor = 'bg-amber-500';
       badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs';
     } else {
-      dotColor = 'bg-emerald-500';
-      badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
+      dotColor = 'bg-blue-500';
+      badgeClasses = 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs';
     }
   }
 
@@ -83,7 +77,7 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
 
   return (
     <div
-      title="Status da API Orquestradora Java e do Backend Líder"
+      title="Status da API Orquestradora Java e do Backend Líder (/backeds/health)"
       className={cn(
         'inline-flex items-center rounded-full border transition-all duration-200 select-none cursor-default',
         badgeClasses,
@@ -108,3 +102,4 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
     </div>
   );
 };
+

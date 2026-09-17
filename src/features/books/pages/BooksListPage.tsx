@@ -3,17 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   Plus,
   Search,
-  FilterX,
   Eye,
   Edit2,
   Trash2,
   BookOpen,
-  CheckCircle2,
-  Bookmark,
-  Layers,
   RotateCcw,
   AlertCircle,
   Clock,
+  Users,
+  Building2,
+  X,
 } from 'lucide-react';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
@@ -21,7 +20,6 @@ import { MetricCard } from '../../../components/ui/MetricCard';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
 import {
   Table,
   TableHeader,
@@ -30,91 +28,81 @@ import {
   TableBody,
   TableCell,
 } from '../../../components/ui/Table';
-import { Badge } from '../../../components/ui/Badge';
 import { Pagination } from '../../../components/ui/Pagination';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { BackendStatus } from '../components/BackendStatus';
 import { useBooksQuery, useDeleteBookMutation } from '../hooks/useBooksQuery';
 import { formatDate } from '../../../lib/utils';
-import { Book } from '../../../types';
+import { Livro } from '../../../types';
 
 export const BooksListPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Search & Filter state
+  // Search state (pesquisa estritamente em titulo, autor, isbn, editora)
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // TanStack Query para carregar livros com retry: 1
+  // TanStack Query para carregar livros da API Orquestradora
   const {
-    data: books = [],
+    data: livros = [],
     isLoading,
     isError,
     error,
     refetch,
     isFetching,
-  } = useBooksQuery({
-    search: searchTerm,
-    category: selectedCategory,
-    status: selectedStatus,
-  });
+  } = useBooksQuery();
 
-  // TanStack Query Mutation para exclusão
+  // Mutation de exclusão
   const deleteMutation = useDeleteBookMutation();
-  const [deleteBookId, setDeleteBookId] = useState<string | null>(null);
+  const [deleteLivroId, setDeleteLivroId] = useState<number | null>(null);
 
-  // Dynamic Options extraídas dos livros carregados
-  const categories = useMemo(() => {
-    const set = new Set(books.map(b => b.category));
-    return Array.from(set).sort().map(c => ({ value: c, label: c }));
-  }, [books]);
-
-  const statusOptions = [
-    { value: 'Disponível', label: 'Disponível' },
-    { value: 'Reservado', label: 'Reservado' },
-    { value: 'Emprestado', label: 'Emprestado' },
-    { value: 'Manutenção', label: 'Manutenção' },
-    { value: 'Indisponível', label: 'Indisponível' },
-  ];
+  // Filtragem local exclusivamente sobre campos existentes no contrato oficial
+  const filteredLivros = useMemo(() => {
+    if (!searchTerm.trim()) return livros;
+    const term = searchTerm.toLowerCase().trim();
+    return livros.filter(livro => {
+      const matchTitulo = livro.titulo?.toLowerCase().includes(term);
+      const matchAutor = livro.autor?.toLowerCase().includes(term);
+      const matchIsbn = livro.isbn?.toLowerCase().includes(term);
+      const matchEditora = livro.editora?.toLowerCase().includes(term);
+      return matchTitulo || matchAutor || matchIsbn || matchEditora;
+    });
+  }, [livros, searchTerm]);
 
   // Paginação
-  const totalPages = Math.ceil(books.length / itemsPerPage) || 1;
-  const paginatedBooks = useMemo(() => {
+  const totalPages = Math.ceil(filteredLivros.length / itemsPerPage) || 1;
+  const paginatedLivros = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return books.slice(start, start + itemsPerPage);
-  }, [books, currentPage, itemsPerPage]);
+    return filteredLivros.slice(start, start + itemsPerPage);
+  }, [filteredLivros, currentPage, itemsPerPage]);
 
-  const resetFilters = () => {
+  const resetSearch = () => {
     setSearchTerm('');
-    setSelectedCategory('');
-    setSelectedStatus('');
     setCurrentPage(1);
   };
 
-  const hasActiveFilters =
-    searchTerm !== '' || selectedCategory !== '' || selectedStatus !== '';
+  // Métricas legítimas derivadas exclusivamente dos dados reais retornados pela API
+  const totalLivros = livros.length;
+  const totalAutores = useMemo(() => {
+    return new Set(livros.map(l => l.autor?.trim()).filter(Boolean)).size;
+  }, [livros]);
+  const totalEditoras = useMemo(() => {
+    return new Set(livros.map(l => l.editora?.trim()).filter(Boolean)).size;
+  }, [livros]);
 
-  // Métricas calculadas
-  const totalCopies = books.reduce((acc, b) => acc + (b.totalCopies || 0), 0);
-  const availableCopies = books.reduce((acc, b) => acc + (b.availableCopies || 0), 0);
-  const borrowedCopies = Math.max(0, totalCopies - availableCopies);
-  const reservedCount = books.filter(b => b.status === 'Reservado').length;
+  const livroParaExcluir = livros.find(l => l.id_livro === deleteLivroId);
 
-  const bookToDelete = books.find(b => b.id === deleteBookId);
-
-  // Tratamento de mensagem de erro amigável / timeout
+  // Mensagem amigável de erro extraída centralizadamente
   const errorMessage = useMemo(() => {
     if (!error) return null;
-    if ((error as any).isTimeout) {
+    if ((error as any)?.isTimeout) {
       return 'A resposta está demorando mais que o esperado. Tente novamente.';
     }
     return (
-      (error as any).message ||
-      'Não foi possível carregar os livros. Verifique a conexão com a API Orquestradora.'
+      (error as any)?.message ||
+      'Não foi possível conectar à API Orquestradora. Verifique se o serviço está ativo em http://localhost:8080.'
     );
   }, [error]);
 
@@ -122,11 +110,11 @@ export const BooksListPage: React.FC = () => {
 
   return (
     <PageContainer>
-      {/* Header com identificador do backend ativo */}
+      {/* Header com indicador do backend ativo */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <PageHeader
           title="Livros"
-          description="Gerencie o acervo cadastrado no sistema."
+          description="Gerencie o acervo cadastrado no sistema através da API Orquestradora."
           className="mb-0"
         />
 
@@ -143,48 +131,40 @@ export const BooksListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+      {/* Cards de Métricas Reais do Contrato */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
         <MetricCard
-          label="Total no Acervo"
-          value={isLoading || isError ? '—' : totalCopies.toString()}
-          contextText={isError ? 'API desconectada' : `${books.length} títulos cadastrados`}
+          label="Total de Livros"
+          value={isLoading || isError ? '—' : totalLivros.toString()}
+          contextText={isError ? 'API desconectada' : `${totalLivros} títulos cadastrados`}
           icon={<BookOpen className="w-5 h-5" />}
           variant="blue"
         />
 
         <MetricCard
-          label="Disponíveis"
-          value={isLoading || isError ? '—' : availableCopies.toString()}
-          contextText={isError ? 'indisponível' : 'prontos para consulta'}
-          icon={<CheckCircle2 className="w-5 h-5" />}
-          variant="green"
-        />
-
-        <MetricCard
-          label="Emprestados"
-          value={isLoading || isError ? '—' : borrowedCopies.toString()}
-          contextText={isError ? 'indisponível' : 'em posse de leitores'}
-          icon={<Layers className="w-5 h-5" />}
-          variant="orange"
-        />
-
-        <MetricCard
-          label="Reservados"
-          value={isLoading || isError ? '—' : reservedCount.toString()}
-          contextText={isError ? 'indisponível' : 'aguardando retirada'}
-          icon={<Bookmark className="w-5 h-5" />}
+          label="Autores Cadastrados"
+          value={isLoading || isError ? '—' : totalAutores.toString()}
+          contextText={isError ? 'indisponível' : `${totalAutores} autores distintos`}
+          icon={<Users className="w-5 h-5" />}
           variant="purple"
+        />
+
+        <MetricCard
+          label="Editoras Registradas"
+          value={isLoading || isError ? '—' : totalEditoras.toString()}
+          contextText={isError ? 'indisponível' : `${totalEditoras} editoras no acervo`}
+          icon={<Building2 className="w-5 h-5" />}
+          variant="green"
         />
       </div>
 
-      {/* Barra de Busca e Filtros */}
+      {/* Barra de Busca (somente campos do contrato: título, autor, isbn, editora) */}
       <Card className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
-          <div className="lg:col-span-6">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex-1 w-full">
             <Input
-              label="Buscar"
-              placeholder="Buscar por título, autor ou ISBN..."
+              label="Buscar no Acervo"
+              placeholder="Pesquisar por título, autor, ISBN ou editora..."
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
@@ -194,45 +174,18 @@ export const BooksListPage: React.FC = () => {
             />
           </div>
 
-          <div className="lg:col-span-3">
-            <Select
-              label="Categoria"
-              placeholder="Todas as categorias"
-              options={categories}
-              value={selectedCategory}
-              onChange={e => {
-                setSelectedCategory(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <div className="lg:col-span-2">
-            <Select
-              label="Status"
-              placeholder="Todos"
-              options={statusOptions}
-              value={selectedStatus}
-              onChange={e => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <div className="lg:col-span-1">
-            <Button
-              variant="outline"
-              size="md"
-              disabled={!hasActiveFilters}
-              onClick={resetFilters}
-              icon={<FilterX className="w-4 h-4" />}
-              className="w-full"
-              title="Limpar filtros"
-            >
-              <span className="lg:hidden">Limpar</span>
-            </Button>
-          </div>
+          {searchTerm && (
+            <div className="sm:self-end pb-0.5">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={resetSearch}
+                icon={<X className="w-4 h-4" />}
+              >
+                Limpar Busca
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -251,7 +204,7 @@ export const BooksListPage: React.FC = () => {
               <div>
                 <h4 className="text-sm font-bold text-rose-900">
                   {isTimeoutError
-                    ? 'Tempo limite de resposta excedido'
+                    ? 'A resposta está demorando mais que o esperado. Tente novamente.'
                     : 'Falha ao carregar livros'}
                 </h4>
                 <p className="text-xs text-rose-700 mt-0.5">{errorMessage}</p>
@@ -271,10 +224,10 @@ export const BooksListPage: React.FC = () => {
         </Card>
       )}
 
-      {/* TABELA DE LIVROS / LOADING SKELETON / EMPTY STATE */}
+      {/* TABELA DE LIVROS DO CONTRATO OFICIAL */}
       <Card padding="none" className="overflow-hidden">
         {isLoading ? (
-          /* Loading State: Skeleton */
+          /* Loading State */
           <div className="p-8 space-y-4">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="h-4 bg-slate-200 rounded w-1/4 animate-pulse" />
@@ -288,48 +241,43 @@ export const BooksListPage: React.FC = () => {
                   <div className="h-3 bg-slate-100 rounded w-1/5 animate-pulse" />
                 </div>
                 <div className="h-4 bg-slate-200 rounded w-1/6 animate-pulse hidden sm:block" />
-                <div className="h-6 bg-slate-100 rounded-full w-20 animate-pulse" />
               </div>
             ))}
             <div className="text-center py-2 text-xs text-slate-400 font-medium">
-              Carregando acervo da API Orquestradora...
+              Carregando livros...
             </div>
           </div>
-        ) : paginatedBooks.length > 0 ? (
+        ) : paginatedLivros.length > 0 ? (
           <>
             <Table>
               <TableHeader>
                 <TableRow isHoverable={false}>
-                  <TableHead>Livro</TableHead>
+                  <TableHead>Título</TableHead>
                   <TableHead>Autor</TableHead>
                   <TableHead>ISBN</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Exemplares</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Atualização</TableHead>
+                  <TableHead>Editora</TableHead>
+                  <TableHead>Data de Cadastro</TableHead>
+                  <TableHead>Data de Atualização</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedBooks.map(book => (
-                  <TableRow key={book.id}>
+                {paginatedLivros.map((livro: Livro) => (
+                  <TableRow key={livro.id_livro}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-10 rounded-md flex items-center justify-center text-white text-2xs font-bold shrink-0 shadow-2xs"
-                          style={{ backgroundColor: book.coverColor || '#D90052' }}
-                        >
+                        <div className="w-8 h-10 rounded-md flex items-center justify-center text-white bg-[#D90052] shrink-0 shadow-2xs">
                           <BookOpen className="w-4 h-4 opacity-90" />
                         </div>
                         <div className="min-w-0">
                           <Link
-                            to={`/livros/${book.id}`}
+                            to={`/livros/${livro.id_livro}`}
                             className="font-bold text-slate-900 hover:text-[#D90052] transition-colors truncate block text-sm"
                           >
-                            {book.title}
+                            {livro.titulo}
                           </Link>
                           <span className="text-2xs text-slate-400 block truncate">
-                            {book.publisher} • {book.year}
+                            ID: #{livro.id_livro}
                           </span>
                         </div>
                       </div>
@@ -337,38 +285,31 @@ export const BooksListPage: React.FC = () => {
 
                     <TableCell>
                       <span className="text-xs sm:text-sm font-medium text-slate-800">
-                        {book.author}
+                        {livro.autor}
                       </span>
                     </TableCell>
 
                     <TableCell>
                       <span className="font-mono text-2xs sm:text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                        {book.isbn}
+                        {livro.isbn}
                       </span>
                     </TableCell>
 
                     <TableCell>
                       <span className="text-xs font-semibold text-slate-700 bg-slate-100/80 px-2.5 py-1 rounded-lg border border-slate-200/60">
-                        {book.category}
+                        {livro.editora}
                       </span>
                     </TableCell>
 
                     <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                          {book.availableCopies}
-                        </span>
-                        <span className="text-xs text-slate-400">/ {book.totalCopies}</span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <Badge status={book.status} size="sm" />
+                      <span className="text-xs text-slate-500">
+                        {formatDate(livro.data_cadastro)}
+                      </span>
                     </TableCell>
 
                     <TableCell>
                       <span className="text-xs text-slate-500">
-                        {formatDate(book.updatedAt)}
+                        {formatDate(livro.data_atualizacao)}
                       </span>
                     </TableCell>
 
@@ -377,7 +318,7 @@ export const BooksListPage: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigate(`/livros/${book.id}`)}
+                          onClick={() => navigate(`/livros/${livro.id_livro}`)}
                           icon={<Eye className="w-3.5 h-3.5" />}
                           className="h-8 px-2 text-slate-500 hover:text-[#D90052]"
                           aria-label="Visualizar livro"
@@ -386,7 +327,7 @@ export const BooksListPage: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigate(`/livros/${book.id}/editar`)}
+                          onClick={() => navigate(`/livros/${livro.id_livro}/editar`)}
                           icon={<Edit2 className="w-3.5 h-3.5" />}
                           className="h-8 px-2 text-slate-500 hover:text-amber-600"
                           aria-label="Editar livro"
@@ -395,7 +336,7 @@ export const BooksListPage: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setDeleteBookId(book.id)}
+                          onClick={() => setDeleteLivroId(livro.id_livro)}
                           icon={<Trash2 className="w-3.5 h-3.5" />}
                           className="h-8 px-2 text-slate-500 hover:text-rose-600"
                           aria-label="Excluir livro"
@@ -412,7 +353,7 @@ export const BooksListPage: React.FC = () => {
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalItems={books.length}
+                totalItems={filteredLivros.length}
                 itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
               />
@@ -426,7 +367,7 @@ export const BooksListPage: React.FC = () => {
             </div>
             <h4 className="text-base font-bold text-slate-900 mb-1">
               {isTimeoutError
-                ? 'A resposta da API Orquestradora demorou mais que o limite'
+                ? 'A resposta está demorando mais que o esperado. Tente novamente.'
                 : 'API Orquestradora Indisponível'}
             </h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto mb-5">
@@ -448,13 +389,13 @@ export const BooksListPage: React.FC = () => {
             <EmptyState
               title="Nenhum livro encontrado"
               description={
-                hasActiveFilters
-                  ? 'Não foram encontrados livros com os filtros selecionados. Tente alterar os termos da busca.'
+                searchTerm
+                  ? 'Não foram encontrados livros com o termo pesquisado. Tente outro título, autor, ISBN ou editora.'
                   : 'Nenhum livro cadastrado no acervo da biblioteca.'
               }
-              actionLabel={hasActiveFilters ? 'Limpar Filtros' : '+ Cadastrar Novo Livro'}
+              actionLabel={searchTerm ? 'Limpar Busca' : '+ Cadastrar Novo Livro'}
               onAction={
-                hasActiveFilters ? resetFilters : () => navigate('/livros/novo')
+                searchTerm ? resetSearch : () => navigate('/livros/novo')
               }
             />
           </div>
@@ -463,16 +404,20 @@ export const BooksListPage: React.FC = () => {
 
       {/* Diálogo de Confirmação de Exclusão */}
       <ConfirmDialog
-        isOpen={!!deleteBookId}
-        onClose={() => setDeleteBookId(null)}
+        isOpen={deleteLivroId !== null}
+        onClose={() => setDeleteLivroId(null)}
         onConfirm={async () => {
-          if (deleteBookId) {
-            await deleteMutation.mutateAsync(deleteBookId);
-            setDeleteBookId(null);
+          if (deleteLivroId !== null) {
+            try {
+              await deleteMutation.mutateAsync(deleteLivroId);
+              setDeleteLivroId(null);
+            } catch {
+              // Em caso de erro, a mutation onError exibe mensagem amigável e o registro é mantido
+            }
           }
         }}
         title="Excluir Livro"
-        description={`Tem certeza que deseja excluir o livro "${bookToDelete?.title}"? Esta ação não poderá ser desfeita.`}
+        description={`Tem certeza que deseja excluir o livro "${livroParaExcluir?.titulo || 'selecionado'}"? Esta ação não poderá ser desfeita.`}
         confirmLabel={deleteMutation.isPending ? 'Excluindo...' : 'Sim, Excluir'}
         cancelLabel="Cancelar"
         variant="danger"
@@ -480,3 +425,4 @@ export const BooksListPage: React.FC = () => {
     </PageContainer>
   );
 };
+

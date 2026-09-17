@@ -3,99 +3,80 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft, BookOpen, Save, RotateCcw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Save, AlertCircle, Calendar, Hash } from 'lucide-react';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Textarea } from '../../../components/ui/Textarea';
 import { Button } from '../../../components/ui/Button';
 import { BackendStatus } from '../components/BackendStatus';
 import { useBookQuery, useUpdateBookMutation } from '../hooks/useBooksQuery';
+import { formatDate } from '../../../lib/utils';
 
-const bookSchema = z.object({
-  title: z.string().min(2, 'O título deve ter pelo menos 2 caracteres'),
-  isbn: z.string().min(10, 'ISBN inválido (mínimo 10 caracteres)'),
-  author: z.string().min(2, 'Informe o nome do autor'),
-  publisher: z.string().min(2, 'Informe a editora'),
-  category: z.string().min(1, 'Selecione uma categoria'),
-  year: z.number().min(1000, 'Ano inválido').max(new Date().getFullYear() + 1, 'Ano inválido'),
-  edition: z.string().optional(),
-  pages: z.number().min(1, 'Número de páginas deve ser maior que 0'),
-  language: z.string().min(1, 'Informe o idioma'),
-  shelf: z.string().min(1, 'Informe a localização da prateleira'),
-  totalCopies: z.number().min(1, 'Quantidade total inválida'),
-  availableCopies: z.number().min(0, 'Quantidade disponível inválida'),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  status: z.enum(['Disponível', 'Reservado', 'Emprestado', 'Manutenção', 'Indisponível']),
+const editarLivroSchema = z.object({
+  titulo: z
+    .string()
+    .min(1, 'O título é obrigatório')
+    .min(2, 'O título deve ter pelo menos 2 caracteres'),
+  isbn: z
+    .string()
+    .min(1, 'O código ISBN é obrigatório')
+    .min(10, 'ISBN inválido (mínimo 10 caracteres)'),
+  autor: z
+    .string()
+    .min(1, 'O nome do autor é obrigatório')
+    .min(2, 'Informe o nome do autor'),
+  editora: z
+    .string()
+    .min(1, 'O nome da editora é obrigatório')
+    .min(2, 'Informe a editora'),
 });
 
-type BookFormData = z.infer<typeof bookSchema>;
+type EditarLivroFormData = z.infer<typeof editarLivroSchema>;
 
 export const EditBookPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Queries e Mutations TanStack Query
-  const { data: book, isLoading, isError } = useBookQuery(id);
+  // Consultas e Mutações oficiais TanStack Query
+  const { data: livro, isLoading, isError } = useBookQuery(id);
   const updateMutation = useUpdateBookMutation();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<BookFormData>({
-    resolver: zodResolver(bookSchema),
-    values: book
+  } = useForm<EditarLivroFormData>({
+    resolver: zodResolver(editarLivroSchema),
+    values: livro
       ? {
-          title: book.title,
-          isbn: book.isbn,
-          author: book.author,
-          publisher: book.publisher,
-          category: book.category,
-          year: book.year,
-          edition: book.edition,
-          pages: book.pages,
-          language: book.language,
-          shelf: book.shelf,
-          totalCopies: book.totalCopies,
-          availableCopies: book.availableCopies,
-          description: book.description,
-          status: book.status,
+          titulo: livro.titulo || '',
+          isbn: livro.isbn || '',
+          autor: livro.autor || '',
+          editora: livro.editora || '',
         }
       : undefined,
   });
 
-  const onSubmit = async (data: BookFormData) => {
+  const onSubmit = async (data: EditarLivroFormData) => {
     if (!id) return;
     try {
-      await updateMutation.mutateAsync({ id, data });
+      // O payload de atualização envia estritamente os dados permitidos:
+      // { "titulo": "...", "isbn": "...", "autor": "...", "editora": "..." }
+      await updateMutation.mutateAsync({
+        id_livro: id,
+        data: {
+          titulo: data.titulo.trim(),
+          isbn: data.isbn.trim(),
+          autor: data.autor.trim(),
+          editora: data.editora.trim(),
+        },
+      });
       navigate('/livros');
     } catch {
-      // Notificado via onError da mutation
+      // Erro notificado via onError da mutation
     }
   };
-
-  const categoryOptions = [
-    { value: 'Literatura Brasileira', label: 'Literatura Brasileira' },
-    { value: 'Ficção Científica', label: 'Ficção Científica' },
-    { value: 'Tecnologia', label: 'Tecnologia & Programação' },
-    { value: 'História', label: 'História & Humanidades' },
-    { value: 'Fantasia', label: 'Fantasia & Aventura' },
-    { value: 'Filosofia', label: 'Filosofia' },
-    { value: 'Psicologia', label: 'Psicologia' },
-    { value: 'Ciências', label: 'Ciências & Matemática' },
-    { value: 'Infantojuvenil', label: 'Infantojuvenil' },
-  ];
-
-  const statusOptions = [
-    { value: 'Disponível', label: 'Disponível' },
-    { value: 'Reservado', label: 'Reservado' },
-    { value: 'Emprestado', label: 'Emprestado' },
-    { value: 'Manutenção', label: 'Manutenção' },
-    { value: 'Indisponível', label: 'Indisponível' },
-  ];
 
   // Estado de Carregamento
   if (isLoading) {
@@ -103,9 +84,9 @@ export const EditBookPage: React.FC = () => {
       <PageContainer>
         <Card className="p-12 text-center">
           <div className="w-12 h-12 border-4 border-[#D90052]/20 border-t-[#D90052] rounded-full animate-spin mx-auto mb-4" />
-          <h3 className="text-base font-bold text-slate-800">Carregando dados do livro...</h3>
+          <h3 className="text-base font-bold text-slate-800">Carregando livro...</h3>
           <p className="text-xs text-slate-500 mt-1">
-            Consultando API Orquestradora Java
+            Consultando API Orquestradora em http://localhost:8080
           </p>
         </Card>
       </PageContainer>
@@ -113,7 +94,7 @@ export const EditBookPage: React.FC = () => {
   }
 
   // Estado de Livro Não Encontrado
-  if (isError || !book) {
+  if (isError || !livro) {
     return (
       <PageContainer>
         <Card className="p-12 text-center max-w-lg mx-auto">
@@ -136,7 +117,7 @@ export const EditBookPage: React.FC = () => {
     <PageContainer>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <PageHeader
-          title={`Editar: ${book.title}`}
+          title={`Editar: ${livro.titulo}`}
           description="Atualize as informações cadastrais do livro no acervo."
           className="mb-0"
         />
@@ -148,6 +129,7 @@ export const EditBookPage: React.FC = () => {
             size="md"
             icon={<ArrowLeft className="w-4 h-4" />}
             onClick={() => navigate('/livros')}
+            disabled={updateMutation.isPending}
           >
             Voltar
           </Button>
@@ -159,7 +141,7 @@ export const EditBookPage: React.FC = () => {
           <Card>
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-[#D90052]" />
-              Dados do Livro
+              Dados do Livro (Campos Editáveis)
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
@@ -167,8 +149,9 @@ export const EditBookPage: React.FC = () => {
                 label="Título"
                 isRequired
                 placeholder="Ex: Dom Casmurro"
-                error={errors.title?.message}
-                {...register('title')}
+                error={errors.titulo?.message}
+                {...register('titulo')}
+                disabled={updateMutation.isPending}
               />
 
               <Input
@@ -177,110 +160,51 @@ export const EditBookPage: React.FC = () => {
                 placeholder="Ex: 978-8572328104"
                 error={errors.isbn?.message}
                 {...register('isbn')}
+                disabled={updateMutation.isPending}
               />
 
               <Input
                 label="Autor"
                 isRequired
                 placeholder="Ex: Machado de Assis"
-                error={errors.author?.message}
-                {...register('author')}
+                error={errors.autor?.message}
+                {...register('autor')}
+                disabled={updateMutation.isPending}
               />
 
               <Input
                 label="Editora"
                 isRequired
                 placeholder="Ex: Editora Garnier"
-                error={errors.publisher?.message}
-                {...register('publisher')}
+                error={errors.editora?.message}
+                {...register('editora')}
+                disabled={updateMutation.isPending}
               />
+            </div>
+          </Card>
 
-              <Select
-                label="Categoria"
-                isRequired
-                options={categoryOptions}
-                error={errors.category?.message}
-                {...register('category')}
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Ano de Publicação"
-                  type="number"
-                  isRequired
-                  error={errors.year?.message}
-                  {...register('year', { valueAsNumber: true })}
-                />
-
-                <Input
-                  label="Edição"
-                  placeholder="Ex: 2ª Edição"
-                  error={errors.edition?.message}
-                  {...register('edition')}
-                />
+          {/* Metadados somente-leitura (id_livro e datas) protegidos contra edição manual */}
+          <Card className="bg-slate-50/50 border-slate-200">
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Hash className="w-3.5 h-3.5 text-slate-400" />
+              Metadados do Registro (Somente Leitura)
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200">
+                <span className="text-slate-400 block mb-1">ID do Livro (id_livro)</span>
+                <span className="font-mono font-bold text-slate-800">#{livro.id_livro}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Total de Páginas"
-                  type="number"
-                  isRequired
-                  error={errors.pages?.message}
-                  {...register('pages', { valueAsNumber: true })}
-                />
-
-                <Input
-                  label="Idioma"
-                  isRequired
-                  placeholder="Ex: Português"
-                  error={errors.language?.message}
-                  {...register('language')}
-                />
+              <div className="p-3 bg-white rounded-xl border border-slate-200">
+                <span className="text-slate-400 block mb-1 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Data de Cadastro
+                </span>
+                <span className="font-medium text-slate-700">{formatDate(livro.data_cadastro)}</span>
               </div>
-
-              <Input
-                label="Prateleira / Localização"
-                isRequired
-                placeholder="Ex: A-01-04"
-                error={errors.shelf?.message}
-                {...register('shelf')}
-              />
-
-              <div className="grid grid-cols-3 gap-3">
-                <Input
-                  label="Total Exemplares"
-                  type="number"
-                  isRequired
-                  error={errors.totalCopies?.message}
-                  {...register('totalCopies', { valueAsNumber: true })}
-                />
-
-                <Input
-                  label="Disponíveis"
-                  type="number"
-                  isRequired
-                  error={errors.availableCopies?.message}
-                  {...register('availableCopies', { valueAsNumber: true })}
-                />
-
-                <Select
-                  label="Status"
-                  isRequired
-                  options={statusOptions}
-                  error={errors.status?.message}
-                  {...register('status')}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <Textarea
-                  label="Sinopse / Descrição"
-                  isRequired
-                  rows={4}
-                  placeholder="Breve resumo ou sinopse da obra..."
-                  error={errors.description?.message}
-                  {...register('description')}
-                />
+              <div className="p-3 bg-white rounded-xl border border-slate-200">
+                <span className="text-slate-400 block mb-1 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Última Atualização
+                </span>
+                <span className="font-medium text-slate-700">{formatDate(livro.data_atualizacao)}</span>
               </div>
             </div>
           </Card>
@@ -312,3 +236,4 @@ export const EditBookPage: React.FC = () => {
     </PageContainer>
   );
 };
+

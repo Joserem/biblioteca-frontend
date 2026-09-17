@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
-import { BookStatus } from '../../types';
 
 export type BadgeVariant =
   | 'default'
@@ -11,9 +10,10 @@ export type BadgeVariant =
   | 'purple'
   | 'neutral';
 
+
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
-  status?: BookStatus | string;
+  status?: string;
   size?: 'sm' | 'md';
   dot?: boolean;
 }
@@ -30,28 +30,18 @@ export const Badge: React.FC<BadgeProps> = ({
   let computedVariant: BadgeVariant = variant || 'default';
 
   if (status) {
-    switch (status) {
-      case 'Disponível':
-      case 'Python':
-        computedVariant = 'success';
-        break;
-      case 'Reservado':
-      case 'JavaScript':
-        computedVariant = 'warning';
-        break;
-      case 'Indisponível':
-        computedVariant = 'danger';
-        break;
-      case 'Emprestado':
-        computedVariant = 'info';
-        break;
-      case 'Manutenção':
-        computedVariant = 'neutral';
-        break;
-      default:
-        computedVariant = 'neutral';
+    const lower = status.toLowerCase();
+    if (lower.includes('success') || lower.includes('python') || lower.includes('ativo')) {
+      computedVariant = 'success';
+    } else if (lower.includes('warn') || lower.includes('javascript') || lower.includes('node')) {
+      computedVariant = 'warning';
+    } else if (lower.includes('danger') || lower.includes('indisponível') || lower.includes('erro')) {
+      computedVariant = 'danger';
+    } else {
+      computedVariant = 'neutral';
     }
   }
+
 
   const variants = {
     default: 'bg-slate-100 text-slate-700 border-slate-200',

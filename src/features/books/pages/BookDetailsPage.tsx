@@ -4,32 +4,28 @@ import {
   ArrowLeft,
   Edit2,
   BookOpen,
-  Barcode,
   Calendar,
-  Layers,
-  MapPin,
-  Globe,
-  FileText,
-  Clock,
-  CheckCircle2,
   Trash2,
   AlertCircle,
+  Hash,
+  Building2,
+  User,
+  Barcode,
 } from 'lucide-react';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/Badge';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { BackendStatus } from '../components/BackendStatus';
 import { useBookQuery, useDeleteBookMutation } from '../hooks/useBooksQuery';
-import { formatDate, formatDateTime } from '../../../lib/utils';
+import { formatDateTime } from '../../../lib/utils';
 
 export const BookDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: book, isLoading, isError } = useBookQuery(id);
+  const { data: livro, isLoading, isError } = useBookQuery(id);
   const deleteMutation = useDeleteBookMutation();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -39,14 +35,16 @@ export const BookDetailsPage: React.FC = () => {
       <PageContainer>
         <Card className="p-12 text-center">
           <div className="w-12 h-12 border-4 border-[#D90052]/20 border-t-[#D90052] rounded-full animate-spin mx-auto mb-4" />
-          <h3 className="text-base font-bold text-slate-800">Carregando dados do livro...</h3>
-          <p className="text-xs text-slate-500 mt-1">Consultando API Orquestradora</p>
+          <h3 className="text-base font-bold text-slate-800">Carregando livro...</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Consultando API Orquestradora em http://localhost:8080
+          </p>
         </Card>
       </PageContainer>
     );
   }
 
-  if (isError || !book) {
+  if (isError || !livro) {
     return (
       <PageContainer>
         <Card className="p-12 text-center max-w-lg mx-auto">
@@ -69,9 +67,8 @@ export const BookDetailsPage: React.FC = () => {
     <PageContainer>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <PageHeader
-          title={book.title}
-          description={`Por ${book.author} • Publicado por ${book.publisher}`}
-          badge={<Badge status={book.status} size="md" />}
+          title={livro.titulo}
+          description={`Por ${livro.autor} • Publicado por ${livro.editora}`}
           className="mb-0"
         />
 
@@ -90,7 +87,7 @@ export const BookDetailsPage: React.FC = () => {
             variant="outline"
             size="sm"
             icon={<Edit2 className="w-4 h-4" />}
-            onClick={() => navigate(`/livros/${book.id}/editar`)}
+            onClick={() => navigate(`/livros/${livro.id_livro}/editar`)}
           >
             Editar
           </Button>
@@ -107,109 +104,75 @@ export const BookDetailsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna Principal: Resumo e Sinopse */}
+        {/* Coluna Principal: Informações Oficiais do Livro */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#D90052]" />
-              Sinopse da Obra
-            </h3>
-            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-              {book.description || 'Nenhuma descrição detalhada informada.'}
-            </p>
-          </Card>
-
-          <Card>
-            <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-[#D90052]" />
-              Especificações Técnicas
+              Dados Cadastrais do Livro
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Editora</span>
-                <span className="font-semibold text-slate-800">{book.publisher}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-slate-400 block mb-1 text-xs flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-slate-400" /> Título da Obra
+                </span>
+                <span className="font-semibold text-slate-900 text-base">{livro.titulo}</span>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Ano de Publicação</span>
-                <span className="font-semibold text-slate-800">{book.year}</span>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-slate-400 block mb-1 text-xs flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-400" /> Autor
+                </span>
+                <span className="font-semibold text-slate-800">{livro.autor}</span>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Edição</span>
-                <span className="font-semibold text-slate-800">{book.edition || '1ª Edição'}</span>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-slate-400 block mb-1 text-xs flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" /> Editora
+                </span>
+                <span className="font-semibold text-slate-800">{livro.editora}</span>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Páginas</span>
-                <span className="font-semibold text-slate-800">{book.pages}</span>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Idioma</span>
-                <span className="font-semibold text-slate-800">{book.language}</span>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block mb-1">Categoria</span>
-                <span className="font-semibold text-slate-800">{book.category}</span>
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-slate-400 block mb-1 text-xs flex items-center gap-1.5">
+                  <Barcode className="w-3.5 h-3.5 text-slate-400" /> Código ISBN
+                </span>
+                <span className="font-mono font-semibold text-slate-800">{livro.isbn}</span>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Coluna Lateral: Localização e Disponibilidade */}
+        {/* Coluna Lateral: Metadados do Registro */}
         <div className="space-y-6">
           <Card>
-            <h3 className="text-sm font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#D90052]" />
-              Disponibilidade no Acervo
-            </h3>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs text-slate-600">Total de Exemplares</span>
-                <span className="font-bold text-slate-900 text-sm">{book.totalCopies}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-emerald-50 text-emerald-900 rounded-xl border border-emerald-100">
-                <span className="text-xs font-semibold">Exemplares Disponíveis</span>
-                <span className="font-bold text-emerald-700 text-base">
-                  {book.availableCopies}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs text-slate-600">Localização / Prateleira</span>
-                <span className="font-mono font-bold text-[#D90052] text-xs">
-                  {book.shelf}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs text-slate-600">Código ISBN</span>
-                <span className="font-mono text-xs text-slate-800">{book.isbn}</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <Hash className="w-3.5 h-3.5 text-slate-400" />
               Metadados do Registro
             </h4>
-            <div className="space-y-2 text-xs text-slate-500">
-              <div className="flex justify-between">
-                <span>Cadastrado em:</span>
-                <span className="font-medium text-slate-700">{formatDate(book.createdAt)}</span>
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl flex justify-between items-center">
+                <span className="text-slate-500">ID no Sistema:</span>
+                <span className="font-mono font-bold text-[#D90052]">#{livro.id_livro}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Última atualização:</span>
-                <span className="font-medium text-slate-700">{formatDate(book.updatedAt)}</span>
+
+              <div className="p-3 bg-slate-50 rounded-xl flex justify-between items-center">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-slate-400" /> Data de Cadastro:
+                </span>
+                <span className="font-medium text-slate-700">
+                  {formatDateTime(livro.data_cadastro)}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span>ID do Sistema:</span>
-                <span className="font-mono text-2xs text-slate-400">{book.id}</span>
+
+              <div className="p-3 bg-slate-50 rounded-xl flex justify-between items-center">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-slate-400" /> Última Atualização:
+                </span>
+                <span className="font-medium text-slate-700">
+                  {formatDateTime(livro.data_atualizacao)}
+                </span>
               </div>
             </div>
           </Card>
@@ -221,12 +184,17 @@ export const BookDetailsPage: React.FC = () => {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={async () => {
-          await deleteMutation.mutateAsync(book.id);
-          setIsDeleteDialogOpen(false);
-          navigate('/livros');
+          try {
+            await deleteMutation.mutateAsync(livro.id_livro);
+            setIsDeleteDialogOpen(false);
+            navigate('/livros');
+          } catch {
+            // Em erro, a mutation exibe o erro amigável e mantém na tela
+            setIsDeleteDialogOpen(false);
+          }
         }}
         title="Excluir Livro"
-        description={`Tem certeza que deseja excluir o livro "${book.title}"? Esta ação removerá o título e todos os seus registros do acervo permanentemente.`}
+        description={`Tem certeza que deseja excluir o livro "${livro.titulo}"? Esta ação removerá o registro do acervo permanentemente.`}
         confirmLabel={deleteMutation.isPending ? 'Excluindo...' : 'Sim, Excluir'}
         cancelLabel="Cancelar"
         variant="danger"
@@ -234,3 +202,4 @@ export const BookDetailsPage: React.FC = () => {
     </PageContainer>
   );
 };
+
