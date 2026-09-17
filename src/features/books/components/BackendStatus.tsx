@@ -77,7 +77,7 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
 
   return (
     <div
-      title="Status da API Orquestradora Java e do Backend Líder (/backeds/health)"
+      title="Status da API Orquestradora Java e do Backend Líder (/backends)"
       className={cn(
         'inline-flex items-center rounded-full border transition-all duration-200 select-none cursor-default',
         badgeClasses,

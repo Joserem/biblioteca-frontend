@@ -10,7 +10,7 @@ A aplicação opera **exclusivamente integrada à API Orquestradora Java**, sem 
 
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **API Orquestradora Java**: [http://localhost:8080](http://localhost:8080)
-- **Status da Orquestradora informado pela equipe**: `GET http://localhost:8080/backeds/health`
+- **Status da Orquestradora informado pela equipe**: `GET http://localhost:8080/backends`
 
 ---
 
@@ -59,12 +59,10 @@ Todas as operações de negócio utilizam exclusivamente a API Orquestradora em 
 
 ---
 
-## 4. Status do Backend Ativo (`GET /backeds/health`)
+## 4. Status do Backend Ativo (`GET /backends`)
 
 A situação dos backends e a liderança são consultadas no endpoint público da Orquestradora:
-`GET http://localhost:8080/backeds/health`
-
-*(Atenção: a rota está literalmente escrita `/backeds/health` conforme contrato fornecido pela equipe responsável).*
+`GET http://localhost:8080/backends`
 
 O badge no frontend reflete a liderança informada pela Orquestradora:
 - `leader: "api-python"` → **Ativo: Python**

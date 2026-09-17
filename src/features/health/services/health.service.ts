@@ -23,14 +23,14 @@ export interface HealthCheckResponse {
 /**
  * Serviço responsável por consultar o status de liderança e saúde dos backends
  * exclusivamente através da API Orquestradora Java.
- * Endpoint exato: GET /backeds/health
+ * Endpoint oficial: GET /backends
  */
 export const healthService = {
   async getHealth(): Promise<HealthCheckResponse> {
 
     try {
-      // IMPORTANTE: Utilizar exatamente /backeds/health conforme especificado pela equipe da Orquestradora
-      const response = await apiClient.get<HealthCheckResponse>('/backeds/health');
+      // Endpoint oficial da Orquestradora para consulta de status dos backends e líder
+      const response = await apiClient.get<HealthCheckResponse>('/backends');
       return response.data;
     } catch (err: any) {
       // Caso a Orquestradora responda com HTTP 503/400 contendo o corpo { erro: "..." }
