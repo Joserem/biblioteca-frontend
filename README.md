@@ -1,119 +1,134 @@
 # Sistema de Gestão Bibliotecária — Frontend (Equipe 1)
 
-Frontend oficial do **Sistema Bibliotecário**, desenvolvido e mantido pela **Equipe 1** conforme as diretrizes acadêmicas.
+Frontend oficial do **Sistema Bibliotecário**, desenvolvido e mantido pela **Equipe 1**.
+
+A aplicação opera **exclusivamente integrada à API Orquestradora Java**, sem dados mockados e sem chaveamento em tempo de execução.
 
 ---
 
-## 1. Responsabilidade do Frontend
+## 1. Endereços e Comunicação
 
-O escopo desta aplicação concentra-se estritamente na interface e no ciclo completo de gestão do acervo:
-
-- **Listagem de Livros**: Visualização tabular com busca integrada (por título, autor e ISBN), filtros por categoria e status, paginação e métricas de acervo;
-- **Cadastro de Novo Livro**: Formulário validado com React Hook Form e Zod;
-- **Edição de Livro**: Atualização dos dados cadastrais com validação;
-- **Exclusão de Livro**: Operação com confirmação modal explícita;
-- **Indicador do Backend Ativo**: Badge visível em tempo real informando qual nó de processamento está atendendo as requisições (`Ativo: Python` ou `Ativo: JavaScript`).
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **API Orquestradora Java**: [http://localhost:8080](http://localhost:8080)
+- **Health Check da Orquestradora**: `GET http://localhost:8080/backeds/health`
 
 ---
 
-## 2. Arquitetura do Sistema
+## 2. Arquitetura de Comunicação
 
-A comunicação do sistema segue o fluxo arquitetural estrito:
+O fluxo arquitetural do sistema é estritamente centralizado na Orquestradora:
 
 ```
-[ React Frontend (Equipe 1) ]
-              │
-              ▼ (Exclusivamente HTTP REST via VITE_API_URL)
-[ API Orquestradora Java (Equipe Orquestradora) ]
-              ├──▶ [ Backend Python ]
-              └──▶ [ Backend JavaScript ]
+[ React Frontend (Equipe 1) :3000 ]
+                │
+                ▼ (HTTP REST via VITE_API_URL=http://localhost:8080)
+[ API Orquestradora Java :8080 ]
+                │
+                ├──▶ [ Backend disponível ]
+                └──▶ [ Backend disponível ]
 ```
+
+> **Regra Central de Comunicação:**
+> O frontend não depende das portas individuais dos backends. Toda comunicação ocorre exclusivamente pela API Orquestradora em http://localhost:8080. A identificação, disponibilidade, eleição do líder e failover entre os backends são responsabilidades da Orquestradora.
 
 ### Regras Arquiteturais Obrigatórias:
 
-> **O frontend nunca chama diretamente as APIs Python ou JavaScript.**
-> Toda e qualquer requisição transita unicamente pela **API Orquestradora Java**.
-
-> **A lógica de failover é responsabilidade exclusiva da API Orquestradora.**
-> O frontend não decide quando usar Python ou JavaScript, não monitora a saúde das APIs secundárias e não realiza troca de rotas. O frontend apenas exibe o indicador visual do backend que processou a requisição com base no contrato retornado pela Orquestradora.
+- **O frontend nunca acessa diretamente os backends individuais.**
+  Toda e qualquer requisição transita unicamente pela **API Orquestradora Java** através de `VITE_API_URL=http://localhost:8080`.
+- **Endpoint Oficial de Health**:
+  O endpoint oficial informado pela equipe para verificar a situação dos backends é:
+  `GET http://localhost:8080/backeds/health`
+  *(ATENÇÃO: a rota correta é literalmente `/backeds/health`. NÃO corrigir para `/backends/health`).*
+- **A lógica de failover e eleição de líder é responsabilidade exclusiva da API Orquestradora.**
+  O frontend apenas consome o endpoint `GET /backeds/health` e reflete o status do líder retornado no badge (`Ativo: Python`, `Ativo: Java`, `Ativo: JavaScript`, `Backend indisponível` ou `Orquestradora indisponível`).
+- **Operações de Livros**:
+  Todas as operações de acervo são realizadas exclusivamente através da Orquestradora:
+  - `GET /books` (listagem e filtros de busca)
+  - `GET /books/:id` (detalhes do livro)
+  - `POST /books` (cadastro de novo livro)
+  - `PUT /books/:id` (edição de livro)
+  - `DELETE /books/:id` (exclusão de livro)
+- **Zero Mocks**:
+  A aplicação opera exclusivamente com dados reais. Em caso de indisponibilidade da Orquestradora ou dos backends, o frontend apresenta estados visuais de erro amigáveis com botão *"Tentar novamente"*, sem exibir dados fictícios ou simular sucesso.
 
 ---
 
-## 3. Integração com Backend e Uso de Mocks
+## 3. Variáveis de Ambiente
 
-- O frontend está preparado para consumir **exclusivamente** a API Orquestradora Java.
-- **Para desenvolvimento e testes isolados do frontend**, utilizar:
-  ```env
-  VITE_USE_MOCKS=true
-  ```
-- **Para integração com a API Orquestradora Java**, utilizar:
-  ```env
-  VITE_USE_MOCKS=false
-  VITE_API_URL=http://localhost:8080/api
-  ```
-- Os mocks existem **somente para desenvolvimento/testes do frontend** e **não devem ser utilizados na demonstração oficial integrada**.
-- Com `VITE_USE_MOCKS=false`, todas as operações do CRUD de livros devem ser realizadas exclusivamente através da API Orquestradora Java.
-- O frontend **nunca deve chamar diretamente as APIs Python ou JavaScript**.
-- A decisão de failover é **responsabilidade exclusiva da API Orquestradora**.
+O arquivo `.env` deve conter exclusivamente a URL da API Orquestradora:
+
+```env
+VITE_API_URL=http://localhost:8080
+```
+
+> **Nota:** O arquivo `.env.example` serve como referência idêntica. A aplicação opera exclusivamente com a API Orquestradora real.
 
 ---
 
 ## 4. Estrutura de Rotas
 
-O sistema inicia diretamente no módulo de livros:
-
 | Rota | Descrição |
 |---|---|
 | `/` | Redireciona automaticamente para `/livros` |
-| `/livros` | Listagem geral de livros, busca integrada e ações do CRUD |
-| `/livros/novo` | Cadastro de novo livro |
-| `/livros/:id` | Detalhes do exemplar no acervo |
-| `/livros/:id/editar` | Edição de livro cadastrado |
+| `/livros` | Listagem de livros, métricas reais do acervo, filtros e ações CRUD |
+| `/livros/novo` | Formulário de cadastro de novo livro via API |
+| `/livros/:id` | Detalhes e informações completas do livro |
+| `/livros/:id/editar` | Edição dos dados cadastrais do livro via API |
 
 ---
 
-## 5. Resiliência e Tratamento de Estados
+## 5. Como Testar a Aplicação
 
-- **Loading**: Skeleton tables e spinners informativos durante consultas assíncronas;
-- **Timeout**: Timeout configurado em 10 segundos no Axios para absorver transições e respostas lentas. Quando o tempo limite expira, é apresentada a mensagem: *"A resposta está demorando mais que o esperado. Tente novamente."*;
-- **Retry Controlado**: `retry: 1` gerenciado via TanStack Query;
-- **Feedback de Erro**: Tratamento amigável com opção de repetição manual (*"Tentar novamente"*).
-
----
-
-## 6. Como Executar Localmente
-
-### Pré-requisitos
-- Node.js (versão 18 ou superior)
-- npm ou bun
-
-### Passo a Passo
+Siga o passo a passo abaixo para validar a integração completa:
 
 1. **Instalar dependências**:
    ```bash
    npm install
    ```
 
-2. **Configurar variáveis de ambiente**:
-   Crie um arquivo `.env` a partir do `.env.example`:
+2. **Configurar o arquivo `.env`**:
    ```bash
    cp .env.example .env
    ```
+   Certifique-se de que `VITE_API_URL=http://localhost:8080`.
 
-   Configure a URL da API Orquestradora Java:
-   ```env
-   VITE_API_URL=http://localhost:8080/api
-   ```
+3. **Iniciar a API Orquestradora Java**:
+   Execute a Orquestradora na porta `8080`.
 
-3. **Iniciar o servidor de desenvolvimento**:
+4. **Iniciar pelo menos um backend**:
+   Inicie pelo menos um nó de backend (Python ou JavaScript).
+
+5. **Iniciar o frontend**:
    ```bash
    npm run dev
    ```
 
-   Acesse em: [http://localhost:3000](http://localhost:3000)
+6. **Acessar o sistema**:
+   Abra no navegador: [http://localhost:3000/livros](http://localhost:3000/livros)
 
-4. **Validação de Código e Build**:
-   ```bash
-   npm run lint     # Verificação de tipos TypeScript (tsc --noEmit)
-   npm run build    # Build de produção com Vite
-   ```
+7. **Verificar o status do backend**:
+   Observe o badge no topo da página:
+   - `Ativo: Python` — quando o backend líder for o Python;
+   - `Ativo: Java` — quando o backend líder for Java;
+   - `Ativo: JavaScript` — quando o backend líder for JavaScript;
+   - `Backend indisponível` — quando a Orquestradora estiver online, mas nenhum backend responder;
+   - `Orquestradora indisponível` — quando a Orquestradora (`localhost:8080`) estiver inacessível.
+
+8. **Testar listagem e operações do CRUD**:
+   - **Listagem**: Os dados exibidos virão diretamente do backend através da Orquestradora (`GET /books`);
+   - **Cadastro**: Clicar em *"Novo Livro"*, preencher os dados e salvar (`POST /books`);
+   - **Edição**: Selecionar um livro, alterar dados e salvar (`PUT /books/:id`);
+   - **Exclusão**: Clicar no ícone de lixeira, confirmar a exclusão e verificar a remoção (`DELETE /books/:id`).
+
+---
+
+## 6. Validação e Qualidade de Código
+
+Execute os comandos abaixo para certificar que o código está estritamente tipado e sem falhas de build:
+
+```bash
+npx tsc --noEmit    # Verificação estrita de tipos TypeScript
+npm run lint        # Verificação via linter
+npm run build       # Build de produção com Vite
+```
+

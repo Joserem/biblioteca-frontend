@@ -147,32 +147,32 @@ export const BooksListPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <MetricCard
           label="Total no Acervo"
-          value={isLoading ? '...' : totalCopies.toString()}
-          contextText={`${books.length} títulos cadastrados`}
+          value={isLoading || isError ? '—' : totalCopies.toString()}
+          contextText={isError ? 'API desconectada' : `${books.length} títulos cadastrados`}
           icon={<BookOpen className="w-5 h-5" />}
           variant="blue"
         />
 
         <MetricCard
           label="Disponíveis"
-          value={isLoading ? '...' : availableCopies.toString()}
-          contextText="prontos para consulta"
+          value={isLoading || isError ? '—' : availableCopies.toString()}
+          contextText={isError ? 'indisponível' : 'prontos para consulta'}
           icon={<CheckCircle2 className="w-5 h-5" />}
           variant="green"
         />
 
         <MetricCard
           label="Emprestados"
-          value={isLoading ? '...' : borrowedCopies.toString()}
-          contextText="em posse de leitores"
+          value={isLoading || isError ? '—' : borrowedCopies.toString()}
+          contextText={isError ? 'indisponível' : 'em posse de leitores'}
           icon={<Layers className="w-5 h-5" />}
           variant="orange"
         />
 
         <MetricCard
           label="Reservados"
-          value={isLoading ? '...' : reservedCount.toString()}
-          contextText="aguardando retirada"
+          value={isLoading || isError ? '—' : reservedCount.toString()}
+          contextText={isError ? 'indisponível' : 'aguardando retirada'}
           icon={<Bookmark className="w-5 h-5" />}
           variant="purple"
         />
@@ -418,6 +418,30 @@ export const BooksListPage: React.FC = () => {
               />
             </div>
           </>
+        ) : isError ? (
+          /* Estado de Erro na Tabela */
+          <div className="p-10 flex flex-col items-center justify-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 border border-rose-100">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <h4 className="text-base font-bold text-slate-900 mb-1">
+              {isTimeoutError
+                ? 'A resposta da API Orquestradora demorou mais que o limite'
+                : 'API Orquestradora Indisponível'}
+            </h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mb-5">
+              {errorMessage}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<RotateCcw className="w-3.5 h-3.5" />}
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? 'Tentando reconectar...' : 'Tentar novamente'}
+            </Button>
+          </div>
         ) : (
           /* Empty State */
           <div className="p-8">

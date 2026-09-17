@@ -1,5 +1,5 @@
 import React from 'react';
-import { useBackendStatus } from '../../../lib/api/backend-status';
+import { useHealthQuery } from '../../health/hooks/useHealthQuery';
 import { cn } from '../../../lib/utils';
 import { Server } from 'lucide-react';
 
@@ -9,36 +9,71 @@ interface BackendStatusProps {
   showIcon?: boolean;
 }
 
+/**
+ * Converte o nome do líder retornado pela API Orquestradora Java para o rótulo de exibição.
+ * Exemplo: 'api-python' -> 'Ativo: Python'
+ * O frontend NÃO decide ou escolhe o líder; apenas formata o valor recebido para a interface.
+ */
+function formatLeaderLabel(leader?: string | null): string {
+  if (!leader) return 'Backend indisponível';
+  const lower = leader.toLowerCase();
+  if (lower.includes('python')) {
+    return 'Ativo: Python';
+  }
+  if (lower.includes('java') && !lower.includes('script')) {
+    return 'Ativo: Java';
+  }
+  if (lower.includes('javascript') || lower.includes('js') || lower.includes('node')) {
+    return 'Ativo: JavaScript';
+  }
+  return `Ativo: ${leader}`;
+}
+
 export const BackendStatus: React.FC<BackendStatusProps> = ({
   className,
   size = 'md',
   showIcon = true,
 }) => {
-  const { activeBackend } = useBackendStatus();
-
-  // Mapeamento dinâmico conforme o backend retornado pela API Orquestradora
-  const isPython = activeBackend?.toLowerCase() === 'python';
-  const isJavaScript =
-    activeBackend?.toLowerCase() === 'javascript' ||
-    activeBackend?.toLowerCase() === 'js' ||
-    activeBackend?.toLowerCase() === 'node';
+  const { data, isLoading, isError } = useHealthQuery();
 
   let dotColor = 'bg-slate-400';
   let badgeClasses = 'bg-slate-100 text-slate-700 border-slate-200';
-  let labelText = 'Orquestradora Conectada';
+  let labelText = 'Verificando backend...';
 
-  if (isPython) {
-    dotColor = 'bg-emerald-500';
-    badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
-    labelText = 'Ativo: Python';
-  } else if (isJavaScript) {
+  if (isLoading && !data) {
+    // Consulta inicial em andamento
+    dotColor = 'bg-slate-400';
+    badgeClasses = 'bg-slate-100 text-slate-600 border-slate-200';
+    labelText = 'Verificando backend...';
+  } else if (isError) {
+    // API Orquestradora Java está desligada (falha de rede / timeout)
+    dotColor = 'bg-rose-500';
+    badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs';
+    labelText = 'Orquestradora indisponível';
+  } else if (data?.erro || !data?.leader) {
+    // Orquestradora respondeu, porém nenhum backend está disponível no momento
     dotColor = 'bg-amber-500';
     badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs';
-    labelText = 'Ativo: JavaScript';
-  } else if (activeBackend) {
-    dotColor = 'bg-[#E9005B]';
-    badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs';
-    labelText = `Ativo: ${activeBackend}`;
+    labelText = 'Backend indisponível';
+  } else {
+    // Orquestradora respondeu com líder ativo válido
+    const leader = data.leader;
+    labelText = formatLeaderLabel(leader);
+
+    const lower = leader.toLowerCase();
+    if (lower.includes('python')) {
+      dotColor = 'bg-emerald-500';
+      badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
+    } else if (lower.includes('java') && !lower.includes('script')) {
+      dotColor = 'bg-blue-500';
+      badgeClasses = 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs';
+    } else if (lower.includes('javascript') || lower.includes('js') || lower.includes('node')) {
+      dotColor = 'bg-amber-500';
+      badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs';
+    } else {
+      dotColor = 'bg-emerald-500';
+      badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
+    }
   }
 
   const sizeClasses =
@@ -48,7 +83,7 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
 
   return (
     <div
-      title="Backend responsável pelo processamento na API Orquestradora Java"
+      title="Status da API Orquestradora Java e do Backend Líder"
       className={cn(
         'inline-flex items-center rounded-full border transition-all duration-200 select-none cursor-default',
         badgeClasses,
@@ -56,7 +91,7 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
         className
       )}
     >
-      {/* Ping indicator pulsante */}
+      {/* Indicador pulsante */}
       <span className="relative flex h-2 w-2">
         <span
           className={cn(
