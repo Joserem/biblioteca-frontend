@@ -30,42 +30,42 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 }) => {
   const variantStyles = {
     blue: {
-      iconBg: 'bg-[#FFF0F5] text-[#D90052]',
+      iconColor: 'text-[#D90052]',
       trendColor: 'text-[#D90052]',
       sparklineColor: '#D90052',
       progressBar: 'bg-[#E9005B]',
       progressTrack: 'bg-[#FFF0F5]',
     },
     green: {
-      iconBg: 'bg-emerald-50 text-[#16A34A]',
+      iconColor: 'text-[#16A34A]',
       trendColor: 'text-emerald-600',
       sparklineColor: '#16A34A',
       progressBar: 'bg-emerald-500',
       progressTrack: 'bg-emerald-100/60',
     },
     orange: {
-      iconBg: 'bg-amber-50 text-[#D97706]',
+      iconColor: 'text-[#D97706]',
       trendColor: 'text-amber-600',
       sparklineColor: '#D97706',
       progressBar: 'bg-amber-500',
       progressTrack: 'bg-amber-100/60',
     },
     red: {
-      iconBg: 'bg-rose-50 text-[#DC2626]',
+      iconColor: 'text-[#DC2626]',
       trendColor: 'text-rose-600',
       sparklineColor: '#DC2626',
       progressBar: 'bg-rose-500',
       progressTrack: 'bg-rose-100/60',
     },
     purple: {
-      iconBg: 'bg-purple-50 text-[#9333EA]',
+      iconColor: 'text-[#9333EA]',
       trendColor: 'text-purple-600',
       sparklineColor: '#9333EA',
       progressBar: 'bg-purple-500',
       progressTrack: 'bg-purple-100/60',
     },
     slate: {
-      iconBg: 'bg-slate-100 text-slate-700',
+      iconColor: 'text-slate-700',
       trendColor: 'text-slate-600',
       sparklineColor: '#64748B',
       progressBar: 'bg-slate-500',
@@ -86,8 +86,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       <div className="flex items-center gap-4">
         <div
           className={cn(
-            'w-12 h-12 rounded-xl shrink-0 border border-slate-100 flex items-center justify-center',
-            currentTheme.iconBg
+            'w-14 h-14 shrink-0 flex items-center justify-center',
+            currentTheme.iconColor
           )}
         >
           {icon}

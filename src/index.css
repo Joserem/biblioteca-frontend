@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+}
+
 :root {
   --color-primary: #D90052;
   --color-primary-hover: #BC0048;

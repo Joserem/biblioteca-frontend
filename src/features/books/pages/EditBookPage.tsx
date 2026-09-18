@@ -11,7 +11,7 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { BackendStatus } from '../components/BackendStatus';
 import { useBookQuery, useUpdateBookMutation } from '../hooks/useBooksQuery';
-import { formatDate } from '../../../lib/utils';
+import { formatDate, formatIsbnInput } from '../../../lib/utils';
 
 const editarLivroSchema = z.object({
   titulo: z
@@ -21,7 +21,7 @@ const editarLivroSchema = z.object({
   isbn: z
     .string()
     .min(1, 'O código ISBN é obrigatório')
-    .min(10, 'ISBN inválido (mínimo 10 caracteres)'),
+    .refine(val => val.replace(/\D/g, '').length >= 10, 'ISBN inválido (mínimo 10 dígitos)'),
   autor: z
     .string()
     .min(1, 'O nome do autor é obrigatório')
@@ -51,7 +51,7 @@ export const EditBookPage: React.FC = () => {
     values: livro
       ? {
           titulo: livro.titulo || '',
-          isbn: livro.isbn || '',
+          isbn: formatIsbnInput(livro.isbn || ''),
           autor: livro.autor || '',
           editora: livro.editora || '',
         }
@@ -158,8 +158,14 @@ export const EditBookPage: React.FC = () => {
                 label="ISBN"
                 isRequired
                 placeholder="Ex: 978-8572328104"
+                inputMode="numeric"
+                maxLength={14}
                 error={errors.isbn?.message}
-                {...register('isbn')}
+                {...register('isbn', {
+                  onChange: e => {
+                    e.target.value = formatIsbnInput(e.target.value);
+                  },
+                })}
                 disabled={updateMutation.isPending}
               />
 

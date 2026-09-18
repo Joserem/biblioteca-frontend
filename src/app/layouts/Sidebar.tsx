@@ -1,14 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import {
-  BookOpen,
-  ChevronDown,
-  PlusCircle,
-  ListFilter,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { BookOpen, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import undbLogo from '../../assets/logo.png';
 import undbIcon from '../../assets/logo2.png';
@@ -27,15 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const location = useLocation();
-
-  // Submenu de livros sempre aberto por padrão
-  const [booksMenuOpen, setBooksMenuOpen] = useState(true);
   const isBooksRoute = location.pathname.startsWith('/livros');
-
-  const subItems = [
-    { label: 'Listagem', path: '/livros', icon: <ListFilter className="w-4 h-4" /> },
-    { label: 'Novo Livro', path: '/livros/novo', icon: <PlusCircle className="w-4 h-4" /> },
-  ];
 
   const sidebarContent = (
     <div
@@ -45,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       {/* Top Header / Branding UNDB */}
-      <div className="flex items-center justify-between px-5 py-6 shrink-0 relative border-b border-white/10">
+      <div className="flex items-center justify-center px-5 py-6 shrink-0 relative border-b border-white/10">
         <NavLink
           to="/livros"
           onClick={onMobileClose}
@@ -58,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="w-10 h-10 object-contain mx-auto transition-transform hover:scale-105"
             />
           ) : (
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center text-center">
               <img
                 src={undbLogo}
                 alt="UNDB Centro Universitário"
@@ -75,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           type="button"
           onClick={onMobileClose}
-          className="md:hidden text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10"
+          className="md:hidden text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 absolute right-4 top-1/2 -translate-y-1/2"
           aria-label="Fechar menu"
         >
           <X className="w-5 h-5" />
@@ -94,72 +78,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation list: Apenas o módulo Livros */}
       <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5">
-        {isCollapsed ? (
-          <NavLink
-            to="/livros"
-            title="Livros"
-            className={({ isActive }) =>
-              cn(
-                'flex items-center justify-center p-3 rounded-xl transition-all duration-150 relative group',
-                isActive || isBooksRoute
-                  ? 'bg-[#E9005B] text-white font-bold shadow-md'
-                  : 'text-white/85 hover:text-white hover:bg-white/10'
-              )
-            }
-          >
-            <BookOpen className="w-5 h-5" />
-          </NavLink>
-        ) : (
-          <div className="space-y-1">
-            <button
-              type="button"
-              onClick={() => setBooksMenuOpen(!booksMenuOpen)}
-              className={cn(
-                'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer',
-                isBooksRoute
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-white/85 hover:text-white hover:bg-white/10'
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-white/90">
-                  <BookOpen className="w-5 h-5" />
-                </span>
-                <span>Livros</span>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'w-4 h-4 text-white/70 transition-transform duration-200',
-                  booksMenuOpen && 'rotate-180 text-white'
-                )}
-              />
-            </button>
-
-            {booksMenuOpen && (
-              <div className="pl-9 pr-1 py-1 space-y-1 animate-in fade-in duration-150">
-                {subItems.map((sub, sIndex) => (
-                  <NavLink
-                    key={sIndex}
-                    to={sub.path}
-                    onClick={onMobileClose}
-                    end={sub.path === '/livros'}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
-                        isActive
-                          ? 'bg-[#E9005B] text-white font-bold shadow-xs'
-                          : 'text-white/75 hover:text-white hover:bg-white/10'
-                      )
-                    }
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-                    <span>{sub.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <NavLink
+          to="/livros"
+          title="Livros"
+          onClick={onMobileClose}
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 rounded-xl transition-all duration-150',
+              isCollapsed ? 'justify-center p-3' : 'px-3.5 py-2.5 text-sm font-medium',
+              isActive || isBooksRoute
+                ? 'bg-[#E9005B] text-white font-bold shadow-md'
+                : 'text-white/85 hover:text-white hover:bg-white/10'
+            )
+          }
+        >
+          <BookOpen className="w-5 h-5 shrink-0" />
+          {!isCollapsed && <span>Livros</span>}
+        </NavLink>
       </div>
 
       {/* Rodapé da Sidebar */}

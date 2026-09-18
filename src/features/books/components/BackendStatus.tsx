@@ -33,23 +33,19 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
 }) => {
   const { data, isLoading, isError } = useHealthQuery();
 
-  let dotColor = 'bg-slate-400';
   let badgeClasses = 'bg-slate-100 text-slate-700 border-slate-200';
   let labelText = 'Verificando backend...';
 
   if (isLoading && !data) {
     // Consulta inicial em andamento
-    dotColor = 'bg-slate-400';
     badgeClasses = 'bg-slate-100 text-slate-600 border-slate-200';
     labelText = 'Verificando backend...';
   } else if (isError) {
     // API Orquestradora Java está desligada (localhost:8080 inacessível)
-    dotColor = 'bg-rose-500';
     badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs';
     labelText = 'Orquestradora indisponível';
   } else if (data?.erro || !data?.leader) {
     // Orquestradora respondeu, porém nenhum backend está disponível no momento
-    dotColor = 'bg-amber-500';
     badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs';
     labelText = 'Backend indisponível';
   } else {
@@ -59,13 +55,10 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
 
     const lower = leader.toLowerCase();
     if (lower.includes('python')) {
-      dotColor = 'bg-emerald-500';
       badgeClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs';
     } else if (lower.includes('javascript') || lower.includes('node') || lower.includes('js')) {
-      dotColor = 'bg-amber-500';
       badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs';
     } else {
-      dotColor = 'bg-blue-500';
       badgeClasses = 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs';
     }
   }
@@ -85,17 +78,6 @@ export const BackendStatus: React.FC<BackendStatusProps> = ({
         className
       )}
     >
-      {/* Indicador pulsante */}
-      <span className="relative flex h-2 w-2">
-        <span
-          className={cn(
-            'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
-            dotColor
-          )}
-        />
-        <span className={cn('relative inline-flex rounded-full h-2 w-2', dotColor)} />
-      </span>
-
       {showIcon && <Server className="w-3.5 h-3.5 opacity-70" />}
 
       <span className="tracking-wide">{labelText}</span>

@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Breadcrumb } from '../../components/ui/Breadcrumb';
 import { IconButton } from '../../components/ui/IconButton';
-import { BackendStatus } from '../../features/books/components/BackendStatus';
 import { BreadcrumbItem } from '../../types';
 import logoLoginImg from '../../assets/logologin.png';
 
@@ -61,10 +60,8 @@ export const Header: React.FC<HeaderProps> = ({ onMobileOpen }) => {
           />
         </div>
 
-        {/* Right: Status do Backend Ativo no Mobile */}
-        <div className="shrink-0">
-          <BackendStatus size="sm" showIcon={false} />
-        </div>
+        {/* Spacer para manter a logo centralizada */}
+        <div className="w-10 shrink-0" aria-hidden="true" />
       </header>
 
       {/* Desktop Header */}
@@ -83,11 +80,6 @@ export const Header: React.FC<HeaderProps> = ({ onMobileOpen }) => {
             </IconButton>
 
             <Breadcrumb items={getBreadcrumbs()} />
-          </div>
-
-          {/* Right Side: Indicador do Backend Ativo */}
-          <div className="flex items-center gap-3 shrink-0">
-            <BackendStatus size="md" />
           </div>
         </div>
       </header>

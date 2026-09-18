@@ -48,6 +48,18 @@ export function formatCurrency(num: number): string {
   }).format(num);
 }
 
+/**
+ * Aplica máscara ao ISBN: mantém somente dígitos, limita a 13 (ISBN-13)
+ * e separa o prefixo editorial (978/979) do restante com um hífen.
+ * Não separa grupo/editora/título porque esses comprimentos variam por
+ * faixa oficial de registro e exigiriam a tabela de faixas do ISBN.
+ */
+export function formatIsbnInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 13);
+  if (digits.length <= 3) return digits;
+  return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+}
+
 export function getInitials(name: string): string {
   if (!name) return '??';
   const parts = name.trim().split(/\s+/);

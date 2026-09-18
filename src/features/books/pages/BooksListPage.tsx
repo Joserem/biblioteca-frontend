@@ -6,14 +6,12 @@ import {
   Eye,
   Edit2,
   Trash2,
-  BookOpen,
   RotateCcw,
   AlertCircle,
   Clock,
-  Users,
-  Building2,
   X,
 } from 'lucide-react';
+import { Books, UsersThree, Buildings } from '@phosphor-icons/react';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { MetricCard } from '../../../components/ui/MetricCard';
@@ -137,7 +135,7 @@ export const BooksListPage: React.FC = () => {
           label="Total de Livros"
           value={isLoading || isError ? '—' : totalLivros.toString()}
           contextText={isError ? 'API desconectada' : `${totalLivros} títulos cadastrados`}
-          icon={<BookOpen className="w-5 h-5" />}
+          icon={<Books className="w-10 h-10" weight="duotone" />}
           variant="blue"
         />
 
@@ -145,7 +143,7 @@ export const BooksListPage: React.FC = () => {
           label="Autores Cadastrados"
           value={isLoading || isError ? '—' : totalAutores.toString()}
           contextText={isError ? 'indisponível' : `${totalAutores} autores distintos`}
-          icon={<Users className="w-5 h-5" />}
+          icon={<UsersThree className="w-10 h-10" weight="duotone" />}
           variant="purple"
         />
 
@@ -153,7 +151,7 @@ export const BooksListPage: React.FC = () => {
           label="Editoras Registradas"
           value={isLoading || isError ? '—' : totalEditoras.toString()}
           contextText={isError ? 'indisponível' : `${totalEditoras} editoras no acervo`}
-          icon={<Building2 className="w-5 h-5" />}
+          icon={<Buildings className="w-10 h-10" weight="duotone" />}
           variant="green"
         />
       </div>
@@ -194,11 +192,11 @@ export const BooksListPage: React.FC = () => {
         <Card className="mb-6 border-rose-200 bg-rose-50/50 p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <div className="text-rose-600 flex items-center justify-center shrink-0">
                 {isTimeoutError ? (
-                  <Clock className="w-5 h-5" />
+                  <Clock className="w-9 h-9" />
                 ) : (
-                  <AlertCircle className="w-5 h-5" />
+                  <AlertCircle className="w-9 h-9" />
                 )}
               </div>
               <div>
@@ -267,7 +265,7 @@ export const BooksListPage: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-10 rounded-md flex items-center justify-center text-white bg-[#D90052] shrink-0 shadow-2xs">
-                          <BookOpen className="w-4 h-4 opacity-90" />
+                          <Books className="w-4 h-4 opacity-90" weight="fill" />
                         </div>
                         <div className="min-w-0">
                           <Link
@@ -362,8 +360,8 @@ export const BooksListPage: React.FC = () => {
         ) : isError ? (
           /* Estado de Erro na Tabela */
           <div className="p-10 flex flex-col items-center justify-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 border border-rose-100">
-              <AlertCircle className="w-7 h-7" />
+            <div className="text-rose-600 flex items-center justify-center mb-3">
+              <AlertCircle className="w-12 h-12" />
             </div>
             <h4 className="text-base font-bold text-slate-900 mb-1">
               {isTimeoutError
